@@ -11,6 +11,7 @@ import json
 import sys
 import re
 import warnings
+import matplotlib.patches as mpatches
 warnings.filterwarnings('ignore')
 from datetime import date
 from shapely.geometry import Point
@@ -18,6 +19,7 @@ import geopandas as gpd
 import contextily as ctx
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.colors as colors
 current_date = date.today().strftime('%Y-%m-%d')
 
 city = 'Fargo'
@@ -38,10 +40,10 @@ df = df[['name', 'review_count', 'rating', 'transactions', 'price', 'phone', 'di
 df.head()
 
 
-# In[4]:
+# In[17]:
 
 
-#Plot a map of Houses available
+#Plot a map of Restaurants
 geometry = [Point(xy) for xy in zip(df['longitude'],df['latitude'])]
 
 wardlink = "./geodata/Fargo-Moorhead_Area-polygon.shp"
@@ -53,7 +55,7 @@ ward.crs = {'init':"epsg:4326"}
 geo_df.crs = {'init':"epsg:4326"}
 
 ax = ward.plot(alpha=0.35, color='#ffffff', zorder=1)
-ax = geo_df.plot(ax = ax, markersize = 20, color = 'red',marker = '*',label = 'Fargo', zorder=3)
+ax = geo_df.plot(ax = ax, markersize = 20, color = 'red',marker = '*',label = city, zorder=3)
 ctx.add_basemap(ax, crs=geo_df.crs.to_string(), source=ctx.providers.OpenStreetMap.Mapnik)
 print("Total Number of Restaurants in "+city+": "+str(len(df)))
 plt.show()
@@ -149,6 +151,39 @@ plt.show()
 # In[10]:
 
 
+colormap = {
+'american': 'red',
+'italian': 'blue',
+'chinese': 'green',
+'mexican': 'yellow',
+'thai': 'orange',
+'indian': 'purple',
+'greek': 'brown',
+'pizza': 'gray',
+'bars': 'teal',
+'foodtrucks': 'pink',
+'icecream': 'violet',
+'breakfast': 'beige',
+'coffee': 'turquoise',
+'soup_sandwich': 'gold',
+'hotdogs': 'silver'
+}
+
+geo_df['color'] = df['foodtype'].map(colormap)
+
+
+legend_patches = [mpatches.Patch(color=color, label=food_type) for food_type, color in colormap.items()]
+
+ax = ward.plot(alpha=0.35, color='#ffffff', zorder=1)
+ax = geo_df.plot(ax=ax, markersize=20, column='color', marker='*', label=city, zorder=3)
+ctx.add_basemap(ax, crs=geo_df.crs.to_string(), source=ctx.providers.OpenStreetMap.Mapnik)
+plt.legend(handles=legend_patches, loc="upper left", prop={'size': 6})
+plt.show()
+
+
+# In[11]:
+
+
 #convert price to word format
 def map_price(price):
     if price == "$":
@@ -157,8 +192,12 @@ def map_price(price):
         return 'Medium'
     elif price == "$$$":
         return 'High'
+    elif price == "$$$$":
+        return 'Very High'
+    elif price == "None":
+        return 'Unlisted'
     else:
-        return None
+        return price
 
 # apply the function to create the new column
 df["price_val"] = df["price"].apply(map_price)
@@ -166,7 +205,7 @@ price_count = df["price_val"].value_counts()
 price_count
 
 
-# In[11]:
+# In[12]:
 
 
 price_count.plot.pie(figsize=(15, 10), autopct='%1.1f%%', colors=['red', 'green', 'blue', 'purple', 'orange', 'pink', 'yellow'])
@@ -176,7 +215,7 @@ print("Note: This chart doesn't include restaurants where the price wasn't liste
 plt.show()
 
 
-# In[16]:
+# In[13]:
 
 
 # Group by foodtype and calculate the mean rating
@@ -195,7 +234,7 @@ average_rating = average_rating.rename(columns={'foodtype': 'restaurant_count'})
 average_rating
 
 
-# In[17]:
+# In[14]:
 
 
 sns.set(rc={"figure.figsize":(20, 5)})
@@ -207,7 +246,7 @@ plt.title('Average Rating per Restaurant Food Type Across '+ city, fontdict={'si
 plt.show()
 
 
-# In[19]:
+# In[15]:
 
 
 average_rating = average_rating.sort_values(['restaurant_count'], ascending=[False])
@@ -218,6 +257,39 @@ plt.ylabel('Number of Locations')
 rating_barplot.set_xticklabels(rating_barplot.get_xticklabels(), rotation=45, horizontalalignment='right')
 plt.title('Restaurant Count per Food Type Across '+ city, fontdict={'size': 20, 'weight': 'bold'})
 plt.show()
+
+
+# In[16]:
+
+
+average_rating = average_rating.sort_values(['review_count'], ascending=[False])
+sns.set(rc={"figure.figsize":(20, 5)})
+rating_barplot = sns.barplot(x = average_rating.index, y = 'review_count', data = average_rating)
+plt.xlabel('Restaurant Food Type')
+plt.ylabel('Number of Reviews')
+rating_barplot.set_xticklabels(rating_barplot.get_xticklabels(), rotation=45, horizontalalignment='right')
+plt.title('Total Review Count per Food Type Across '+ city, fontdict={'size': 20, 'weight': 'bold'})
+plt.show()
+
+
+# In[18]:
+
+
+df
+
+
+# In[24]:
+
+
+df = df.sort_values(['price'], ascending=[False])
+print("Top Ten most expensive restaurants in "+city+":")
+df.head(10)
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
