@@ -27,35 +27,34 @@ city = city.replace(" ", "-")
 city = city.capitalize()
 city_state = city + ", " + state
 
-# authenticate your requests with your Yelp API key
+# authenticate requests with your Yelp API key
 
 #you'll have to obtain a Yelp Fusion API key and put it in a credentials.json file, or alternately uncomment below code
 #yelp_api = YelpAPI(<your_api_key_here>)
 
 with open('credentials.json') as f:
     credentials = json.load(f)
-
 api_key = credentials['yelp'] 
-
 yelp_api = YelpAPI(api_key)
 
 # make API call to search for businesses
-offsets = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450]
+offsets = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700]
 dfs = []
 for offset in offsets:
     raw_data = yelp_api.search_query(term='restaurants', location=city_state, offset=offset, limit=50)
     df = pd.DataFrame(raw_data['businesses'])
     dfs.append(df)
-
-# Concatenate them vertically
 combined_df = pd.concat(dfs)
 
 # Reset the index, since it will have duplicate values
 df = combined_df.reset_index(drop=True)
 df.to_csv("./data/" + city + "_Restaurants_"+current_date+".csv")
 
-######################################################
 # data cleaning and conversion
+######################################################
+#Fix transactions
+df['transactions'] = df['transactions'].apply(lambda x: x.replace("[", "").replace("]", "").replace("'", ""))
+
 #fix address
 df = pd.read_csv("./data/"+city+"_Restaurants_"+current_date+".csv")
 df['location'] = df['location'].str.replace("'", "\"")
@@ -63,7 +62,6 @@ df['location'] = df['location'].str.replace("None", "null")
 
 location_dict = []
 
-# iterate through 'location' column and load the JSON data
 for location in df['location']:
     loc = json.loads(location)
     location_dict.append(loc)
@@ -77,7 +75,6 @@ df['coordinates'] = df['coordinates'].str.replace("None", "null")
 
 coordinates_dict = []
 
-# iterate through 'location' column and load the JSON data
 for coordinate in df['coordinates']:
     coord = json.loads(coordinate)
     coordinates_dict.append(coord)
@@ -91,7 +88,6 @@ df['categories'] = df['categories'].str.replace("None", "null")
 
 category_dict = []
 
-# iterate through 'category' column and load the JSON data
 for category in df['categories']:
     loc = json.loads(category)
     category_dict.append(loc)
@@ -109,7 +105,6 @@ category_df['category'] = category_df['category'].str.replace("None", "null")
 
 category_dict = []
 
-# iterate through 'category' column and load the JSON data
 for category in category_df['category']:
     cat = json.loads(category)
     category_dict.append(cat)
