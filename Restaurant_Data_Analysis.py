@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.colors as colors
 current_date = date.today().strftime('%Y-%m-%d')
-
+import subprocess
 city = 'Fargo'
 state = 'nd'
 
@@ -29,18 +29,18 @@ state = 'nd'
 # In[2]:
 
 
-get_ipython().run_line_magic('run', 'yelp_data_scrape.py fargo nd')
 
-
+subprocess.call("python3 yelp_data_scrape.py fargo nd", shell=True)
 # In[3]:
 
 
 df = pd.read_csv("./data/"+city+"_Restaurants_"+current_date+".csv")
 df = df[['name', 'review_count', 'rating', 'transactions', 'price', 'phone', 'display_phone', 'display_address', 'latitude', 'longitude', 'foodtype']]
+df['display_address'] = df['display_address'].apply(lambda x: x.replace("[", "").replace("]", "").replace("'", ""))
 df.head()
 
 
-# In[17]:
+# In[4]:
 
 
 #Plot a map of Restaurants
@@ -77,9 +77,10 @@ print("Top Ten lowest rated restaurants in "+city+":")
 ratings.tail(10)
 
 
-# In[7]:
+# In[19]:
 
 
+df['transactions'] = df['transactions'].fillna('none/unlisted')
 transactions_df = df["transactions"].value_counts()
 transactions_df.plot.pie(figsize=(15, 10), autopct='%1.1f%%', colors=['red', 'green', 'blue', 'purple', 'orange', 'pink', 'yellow'])
 plt.title("Transaction Types for Restaurants in "+city, fontdict={'size': 15, 'weight': 'bold'})
@@ -127,7 +128,7 @@ def map_foodtypes(foodtype):
 df["foodtype"] = df["foodtype"].apply(map_foodtypes)
 
 
-# In[9]:
+# In[40]:
 
 
 #create pie chart of food types
@@ -141,14 +142,13 @@ foodtype_percent = foodtype_count/foodtype_count.sum()
 other_percent = foodtype_percent[foodtype_percent < threshold].sum()
 foodtype_percent = foodtype_percent[foodtype_percent >= threshold]
 foodtype_percent["other (<1.5% share)"] = other_percent
-
-foodtype_percent.plot.pie(figsize=(15, 10), autopct='%1.1f%%', colors=['red', 'green', 'blue', 'purple', 'orange', 'pink', 'yellow'])
+foodtype_percent.plot.pie(figsize=(15, 10), autopct='%1.1f%%', colors=['red', 'green', 'blue', 'purple', 'orange', 'pink', 'yellow'], textprops={'fontsize': 8})
 plt.title("Restaurants Food Types in "+city, fontdict={'size': 15, 'weight': 'bold'})
 plt.ylabel("")
 plt.show()
 
 
-# In[10]:
+# In[28]:
 
 
 colormap = {
@@ -209,7 +209,7 @@ price_count
 
 
 price_count.plot.pie(figsize=(15, 10), autopct='%1.1f%%', colors=['red', 'green', 'blue', 'purple', 'orange', 'pink', 'yellow'])
-plt.title("Restaurants Prices in "+city, fontdict={'size': 15, 'weight': 'bold'})
+plt.title("Listed Restaurants Prices in "+city, fontdict={'size': 15, 'weight': 'bold'})
 plt.ylabel("")
 print("Note: This chart doesn't include restaurants where the price wasn't listed")
 plt.show()
@@ -272,13 +272,7 @@ plt.title('Total Review Count per Food Type Across '+ city, fontdict={'size': 20
 plt.show()
 
 
-# In[18]:
-
-
-df
-
-
-# In[24]:
+# In[17]:
 
 
 df = df.sort_values(['price'], ascending=[False])
