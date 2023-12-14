@@ -1,13 +1,14 @@
 import pandas as pd
-import numpy as np
 import mysql.connector
 from datetime import date
 import sys
 import argparse
 from decouple import config
 from dotenv import load_dotenv
+import warnings
 
 load_dotenv(dotenv_path='config.env')
+
 current_date = date.today().strftime('%Y-%m-%d')
 
 def get_user_input():
@@ -17,43 +18,55 @@ def get_user_input():
 
 def main(city, state):
     
-    #establish DB connection
-    def create_mysql_connection():
-        connection = mysql.connector.connect(
-            host=config('DB_HOST'),
-            user=config('DB_USER'),
-            password=config('DB_PASSWORD'),
-            database=config('DB_NAME')
-        )
-        return connection
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
 
-    # Load data into table
-    def load_data_to_mysql(data, connection):
-        cursor = connection.cursor()
-        columns = ", ".join(data.columns)
-        values = ", ".join(["%s" for _ in range(len(data.columns))])
+        # Establish DB connection
+        def create_mysql_connection():
+            connection = mysql.connector.connect(
+                host=config('DB_HOST'),
+                user=config('DB_USER'),
+                password=config('DB_PASSWORD'),
+                database=config('DB_NAME')
+            )
+            return connection
 
-        for index, row in data.iterrows():
-            insert_query = f"INSERT INTO Business.restaurants ({columns}) VALUES ({values})"
-            cursor.execute(insert_query, tuple(row))
+        # Load existing data from the database
+        def load_existing_data(connection):
+            query = "SELECT name, address FROM Business.restaurants"
+            existing_data = pd.read_sql(query, connection)
+            return existing_data
 
-        connection.commit()
-        cursor.close()
+        # Load data into table, only if the restaurant doesn't exist
+        def load_data_to_mysql(data, existing_data, connection):
+            cursor = connection.cursor()
 
-    # Perform some data transformation
-    df = pd.read_csv("./data/"+city+"_Restaurants_"+current_date+".csv")
-    df = df[['name', 'review_count', 'rating', 'transactions', 'price', 'phone', 'display_phone', 'display_address', 'latitude', 'longitude', 'foodtype', 'city', 'state', 'country']]
-    df = df.rename(columns={'display_address': 'address'}) 
-    df['address'] = df['address'].apply(lambda x: x.replace("[", "").replace("]", "").replace("'", ""))
-    df = df.fillna('')
+            for index, row in data.iterrows():
+                # Check if the restaurant already exists
+                if (row['name'], row['address']) not in zip(existing_data['name'], existing_data['address']):
+                    columns = ", ".join(data.columns)
+                    values = ", ".join(["%s" for _ in range(len(data.columns))])
+                    insert_query = f"INSERT INTO Business.restaurants ({columns}) VALUES ({values})"
+                    cursor.execute(insert_query, tuple(row))
 
-    # Connect and load data
-    mysql_connection = create_mysql_connection()
-    load_data_to_mysql(df, mysql_connection)
-    mysql_connection.close()
+            connection.commit()
+            cursor.close()
+
+        # Perform some data transformation
+        df = pd.read_csv(f"./data/{city}_Restaurants_{current_date}.csv")
+        df = df[['name', 'display_address', 'review_count', 'rating', 'transactions', 'price', 'phone', 'display_phone', 'latitude', 'longitude', 'foodtype', 'city', 'state', 'country']]
+        df = df.rename(columns={'display_address': 'address'}) 
+        df['address'] = df['address'].apply(lambda x: x.replace("[", "").replace("]", "").replace("'", ""))
+        df = df.fillna('')
+
+        # Connect and load data
+        mysql_connection = create_mysql_connection()
+        existing_data = load_existing_data(mysql_connection)
+        load_data_to_mysql(df, existing_data, mysql_connection)
+        mysql_connection.close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Your script description.")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--city", help="City name")
     parser.add_argument("--state", help="State abbreviation")
 

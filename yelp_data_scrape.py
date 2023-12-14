@@ -121,10 +121,10 @@ def main(city, state):
     df.to_csv("./data/" + city + "_Restaurants_"+current_date+".csv")
     os.remove("./data/categories_tmp.csv")
     
-    print("Script Finished\n" f"City: {city}, State: {state}")
+    print(f"Restaurant Data successfully pulled for: {city}, {state}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Your script description.")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--city", help="City name")
     parser.add_argument("--state", help="State abbreviation")
     args = parser.parse_args()

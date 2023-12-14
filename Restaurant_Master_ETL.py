@@ -1,5 +1,7 @@
 import subprocess
 import sys
+import warnings
+warnings.filterwarnings('ignore')
 
 def run_script(script_path, city, state):
     command = [sys.executable, script_path, "--city", city, "--state", state]
@@ -18,13 +20,12 @@ def main():
 
     print(f"Pulling data for {city}, {state}...")
     run_script('yelp_data_scrape.py', city, state)
-    sys.exit(1)
     
     print(f"Loading data into database...")
     run_script('load_restaurant_data.py', city, state)
-    sys.exit(1)
 
     print("ETL Process Finished.")
-
+    sys.exit(1)
+    
 if __name__ == "__main__":
     main()
