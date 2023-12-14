@@ -3,6 +3,7 @@ This project is a data analysis of restaurant listings in any given U.S. city us
 
 - **yelp_data_scrape.py**: python script that pulls restaurant data from Yelp's api for any given U.S. city, performs some data cleaning and transformation, then outputs it to a csv file.
   - syntax: python3 yelp_data_scrape.py --city <city> --state <state>
+  - note: to use this script yourself, you'll need to obtain your own api key from the Yelp Developer tools.
 
 - **load_restaurant_data.py**: python script that loads restaurants in csv file to a local mysql database. Also performs some etl by pulling and comparing existing data so as to not insert duplicate data.
   - syntax: python3 yelp_data_scrape.py --city <city> --state <state>
