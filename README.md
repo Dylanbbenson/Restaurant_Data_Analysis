@@ -21,3 +21,5 @@ This project is a data analysis of restaurant listings in any given U.S. city us
    	- **Business_schema_ddl.sql**: sql script that creates and defines the schema to load this data to.
 	
 - **dockerfile**: contains all the commands required to assemble the docker image for this project.
+
+- **requirements.txt**: referenced by the dockerfile, install necessary python packages for when container is run
