@@ -10,11 +10,12 @@ This project is a data analysis of restaurant listings in any given U.S. city us
 
 	- **Restaurant_Master_ETL.py**: python script that executes the two previous scripts.
 		- syntax: python3 yelp_data_scrape.py <city> <state>
-  
-	- **Restaurant_Data_Analysis.ipynb**: jupyter notebook that performs analysis on the extracted data.
 
 	- **Restaurant_Data_Analysis.py**: a python script created as an alternative to the jupyter notebook.
-	
+
+- /notebooks
+	- **Restaurant_Data_Analysis.ipynb**: jupyter notebook that performs analysis on the extracted data.
+ 
 - /docs
 	- **Restaurant_Data_Analysis.pdf**: an example pdf report of visualized data created by the notebook. The city I used was my hometown Fargo, ND.
 
